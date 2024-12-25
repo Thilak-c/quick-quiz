@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Quiz Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #8EC5FC, #E0C3FC);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        header {
+            width: 100%;
+            background: #4CAF50;
+            padding: 20px 20px;
+            text-align: center;
+            color: white;
+            font-size: 2rem;
+            font-weight: 700;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            border-radius: 0 0 15px 15px;
+        }
+
+        footer {
+            width: 100%;
+            text-align: center;
+            padding: 15px;
+            background: #4CAF50;
+            color: white;
+            position: absolute;
+            bottom: 0;
+            border-radius: 15px 15px 0 0;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            /* align-items: center; */
+            /* justify-content: center; */
+            padding: 20px;
+        }
+
+        #home,
+        #quiz,
+        #leaderboard {
+            display: none;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            /* width: 90%; */
+            max-width: 900px;
+            animation: slideUp 0.5s ease-in-out;
+        }
+
+        #home.active,
+        #quiz.active,
+        #leaderboard.active {
+            display: block;
+        }
+
+        #quiz {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 90%;
+            /* Use most of the screen width */
+            max-width: 800px;
+            /* Max width for larger screens */
+            min-width: 280px;
+            /* Prevent the quiz container from being too small */
+            animation: slideUp 0.5s ease-in-out;
+        }
+
+
+        .btn {
+            padding: 15px 30px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s, background-color 0.3s, box-shadow 0.3s;
+            margin: 15px 0;
+        }
+
+        .btn:hover {
+            background: #45a049;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .option {
+            display: block;
+            margin: 15px 0;
+            padding: 15px;
+            background: #f7f7f7;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .option:hover {
+            background: #eaeaea;
+            transform: translateY(-3px);
+        }
+
+        .correct {
+            background: #4CAF50 !important;
+            color: white;
+        }
+
+        .incorrect {
+            background: #f44336 !important;
+            color: white;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #leaderboard table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        #leaderboard th,
+        #leaderboard td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        #leaderboard th {
+            background: #4CAF50;
+            color: white;
+        }
+
+        #leaderboard td {
+            background: #f9f9f9;
+        }
+
+        #leaderboard tr:hover {
+            background: #f1f1f1;
+        }
+    </style>
+</head>
+
+<body>
+    <header>Quick Quiz Game</header>
+    <main>
+        <div id="home" class="active">
+            <h1>Welcome to the Quick Quiz!</h1>
+            <p>Test your knowledge across a variety of topics. Can you get a perfect score?</p>
+            <button id="start" class="btn">Start Quiz</button>
+            <button id="view-leaderboard" class="btn">View Leaderboard</button>
+        </div>
+        <div id="quiz">
+            <div id="timer">Time: 10s</div>
+            <div id="question">Question will appear here</div>
+            <div id="options"></div>
+        </div>
+        <div id="leaderboard">
+            <h2>Leaderboard</h2>
+            <table id="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Name</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Leaderboard entries go here -->
+                </tbody>
+            </table>
+            <button id="return-home" class="btn">Return Home</button>
+        </div>
+    </main>
+    <footer>&copy; 2024 Quick Quiz Game. All rights reserved.</footer>
+
+    <script>
+        const questions = [
+            {
+                question: "What is the capital of France?",
+                options: ["Berlin", "Madrid", "Paris", "Rome"],
+                answer: 2
+            },
+            {
+                question: "What is 2 + 2?",
+                options: ["3", "4", "5", "6"],
+                answer: 1
+            },
+            {
+                question: "Who wrote 'Hamlet'?",
+                options: ["Charles Dickens", "William Shakespeare", "Mark Twain", "Jane Austen"],
+                answer: 1
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timer;
+        let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+
+        const homeContainer = document.getElementById('home');
+        const quizContainer = document.getElementById('quiz');
+        const leaderboardContainer = document.getElementById('leaderboard');
+        const questionElement = document.getElementById('question');
+        const optionsElement = document.getElementById('options');
+        const timerElement = document.getElementById('timer');
+        const startButton = document.getElementById('start');
+        const leaderboardButton = document.getElementById('view-leaderboard');
+        const returnHomeButton = document.getElementById('return-home');
+
+        startButton.addEventListener('click', startQuiz);
+        leaderboardButton.addEventListener('click', viewLeaderboard);
+        returnHomeButton.addEventListener('click', returnHome);
+
+        function showElement(element) {
+            document.querySelectorAll('main > div').forEach(div => div.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        function startQuiz() {
+            showElement(quizContainer);
+            currentQuestionIndex = 0;
+            score = 0;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            clearInterval(timer);
+            if (currentQuestionIndex < questions.length) {
+                const currentQuestion = questions[currentQuestionIndex];
+                questionElement.textContent = currentQuestion.question;
+                optionsElement.innerHTML = '';
+
+                currentQuestion.options.forEach((option, index) => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add('option');
+                    button.addEventListener('click', () => checkAnswer(index, button));
+                    optionsElement.appendChild(button);
+                });
+
+                let timeLeft = 10;
+                timerElement.textContent = `Time: ${timeLeft}s`;
+                timer = setInterval(() => {
+                    timeLeft--;
+                    timerElement.textContent = `Time: ${timeLeft}s`;
+                    if (timeLeft <= 0) {
+                        clearInterval(timer);
+                        revealCorrectAnswer();
+                        setTimeout(moveToNextQuestion, 2000);
+                    }
+                }, 1000);
+            } else {
+                endQuiz();
+            }
+        }
+
+        function checkAnswer(selectedIndex, button) {
+            clearInterval(timer);
+            const correctIndex = questions[currentQuestionIndex].answer;
+            const buttons = document.querySelectorAll('.option');
+
+            buttons.forEach((btn, index) => {
+                btn.disabled = true;
+                if (index === correctIndex) {
+                    btn.classList.add('correct');
+                } else if (btn === button && index !== correctIndex) {
+                    btn.classList.add('incorrect');
+                }
+            });
+
+            if (selectedIndex === correctIndex) {
+                score++;
+            }
+
+            setTimeout(moveToNextQuestion, 2000);
+        }
+
+        function revealCorrectAnswer() {
+            const correctIndex = questions[currentQuestionIndex].answer;
+            const buttons = document.querySelectorAll('.option');
+            buttons.forEach((btn, index) => {
+                btn.disabled = true;
+                if (index === correctIndex) {
+                    btn.classList.add('correct');
+                }
+            });
+        }
+
+        function moveToNextQuestion() {
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+
+        function endQuiz() {
+            const name = prompt("Enter your name for the leaderboard:") || "Anonymous";
+            leaderboard.push({ name, score });
+            leaderboard.sort((a, b) => b.score - a.score);
+            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+            viewLeaderboard();
+        }
+
+        function viewLeaderboard() {
+            const tableBody = document.querySelector('#leaderboard-table tbody');
+            tableBody.innerHTML = '';
+            leaderboard.forEach((entry, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${index + 1}</td><td>${entry.name}</td><td>${entry.score}</td>`;
+                tableBody.appendChild(row);
+            });
+            showElement(leaderboardContainer);
+        }
+
+        function returnHome() {
+            showElement(homeContainer);
+        }
+
+        // Show home screen on load
+        showElement(homeContainer);
+    </script>
+</body>
+
+</html>
